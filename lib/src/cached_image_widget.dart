@@ -254,14 +254,19 @@ class CachedNetworkImageState extends State<CachedNetworkImage>
   }
 
   _animatedWidget() {
-    return StreamBuilder<FileInfo>(
+    return FutureBuilder<FileInfo>(
       key: _streamBuilderKey,
       initialData: _fileCache[widget.imageUrl],
-      stream: _cacheManager()
+      future: _cacheManager()
           .getFile(widget.imageUrl, headers: widget.httpHeaders)
-          .where((f) =>
-              f?.originalUrl != _fileCache[widget.imageUrl]?.originalUrl ||
-              f?.validTill != _fileCache[widget.imageUrl]?.validTill),
+          /// This 'where' filter becomes pointless. It's not saving much because FileInfo
+          /// is already loaded from cache/network.
+          /// Filtering the result to the future results in a StateError passed down to snapshot.error
+          /// We could have some logic in the builder, but again, we're not saving much.
+          // .where((f) =>
+          //     f?.originalUrl != _fileCache[widget.imageUrl]?.originalUrl ||
+          //     f?.validTill != _fileCache[widget.imageUrl]?.validTill )
+          .first,
       builder: (BuildContext context, AsyncSnapshot<FileInfo> snapshot) {
         if (snapshot.hasError) {
           // error
